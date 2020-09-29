@@ -1,4 +1,4 @@
-import .numericalMethods as nm
-import .misc
-import .io
-import .aerodynamics as aero
+from . import numericalMethods as nm
+from . import aerodynamics as aero
+from . import io
+from . import misc

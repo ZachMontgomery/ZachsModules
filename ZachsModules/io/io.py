@@ -1,3 +1,3 @@
 
 def csvLineWrite():
-    pass
+    print('write')
