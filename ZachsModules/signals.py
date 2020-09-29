@@ -1,0 +1,3 @@
+
+def runningAverage():
+    pass

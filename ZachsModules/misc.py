@@ -1,1 +1,3 @@
 
+def isIterable():
+    pass
