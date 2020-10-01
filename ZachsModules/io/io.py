@@ -1,3 +1,0 @@
-
-def csvLineWrite():
-    print('write')

@@ -1,4 +1,4 @@
 from . import numericalMethods as nm
 from . import aerodynamics as aero
-from . import io
+from . import IO
 from . import misc
