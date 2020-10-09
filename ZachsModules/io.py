@@ -1,5 +1,5 @@
 # from ..aerodynamics import np
-from ..misc import isIterable
+from .misc import isIterable
 from numpy import float64
 
 def csvLineWrite(*obj, sep=',', end='\n'):
@@ -37,7 +37,7 @@ def csvLineRead(line, sep=',', end='\n', columns=None, obj_type=None):
         if obj_type == None:
             while len(strings) < columns:
                 strings.append(None)
-            return strings
+            return strings[:columns]
         if not isIterable(obj_type): obj_type = [obj_type]*columns
         data = [None] * columns
         for i in range(columns):
@@ -470,3 +470,4 @@ def textAlternate(*word, c=77, border=True, title=None, p2s=True, **kw):
     
     if p2s: print(s, end='')
     return s
+

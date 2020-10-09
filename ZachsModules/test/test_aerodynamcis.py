@@ -1,4 +1,4 @@
-from ZachsModules import aero
+from ZachsModules import aerodynamics as aero
 
 
 def test_theta2s():

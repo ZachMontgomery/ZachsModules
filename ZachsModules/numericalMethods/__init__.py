@@ -1,2 +1,2 @@
-from .numericalMethods import *
-from .signals import *
+from .numMtd import *
+from . import signals

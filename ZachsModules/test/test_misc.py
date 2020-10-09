@@ -22,6 +22,3 @@ def test_int2bin():
 def test_zBinary():
     assert 'zBinary' in dir(misc)
 
-def test_zSort():
-    assert 'zSort' in dir(misc)
-

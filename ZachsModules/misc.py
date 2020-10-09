@@ -119,28 +119,3 @@ class zBinary():
     def __rtruediv__(self, x):
         return self.__rdiv__(x)
 
-def zSort(v, *W, ascend=True, verbose=True, msg='Sorting the arrays'):
-    k = len(v)
-    for w in W:
-        if len(w) != k: raise ValueError('All arrays need to be the same length in zSort')
-    c = []
-    if verbose: prog = oneLineProgress(sum([i for i in range(k)])+len(W), msg=msg)
-    for m in range(k):
-        for j in range(k-1,m,-1):
-            i = j-1
-            
-            if (ascend and v[j] < v[i]) or (not ascend and v[j] > v[i]): # or (v[i] != v[i] and v[j] == v[j]):
-                c.append(j)
-                temp = v[j]
-                v[j] = v[i]
-                v[i] = temp
-            if verbose: prog.display()
-    
-    for w in W:
-        for j in c:
-            i = j-1
-            temp = w[j]
-            w[j] = w[i]
-            w[i] = temp
-        if verbose: prog.display()
-

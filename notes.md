@@ -63,6 +63,7 @@
   * func int2bin
   * class zBinary
   * func zSort
-
+* zPlotter
+  * many things
 
 

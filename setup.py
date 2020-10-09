@@ -9,7 +9,7 @@ setuptools.setup(
     # long_description = long_description,
     # long_description_content_type = 'test/markdown',
     url = 'https://github.com/ZachMontgomery/ZachsModules',
-    packages = ['ZachsModules'],
+    packages = setuptools.find_packages(),
     classifiers = [
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',

@@ -1,4 +1,4 @@
-from ZachsModules import nm
+from ZachsModules import numericalMethods as nm
 
 
 def test_nan():
@@ -72,4 +72,7 @@ def test_lowpassFilter():
 
 def test_highpassFilter():
     assert 'highpassFilter' in dir(nm.signals)
+
+def test_zSort():
+    assert 'zSort' in dir(nm)
 
