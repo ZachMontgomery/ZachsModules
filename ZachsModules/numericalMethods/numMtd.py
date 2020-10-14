@@ -1,5 +1,6 @@
 from ..io import oneLineProgress
-
+from ..misc import isIterable
+import numpy as np
 
 nan = float('nan')
 
@@ -197,6 +198,38 @@ def trap(x,y):
 
 
 def centralDifference(f, x, h = 0.5e-2, args = (), kwargs = {}):
+    '''
+    Computes the derivative using central differencing
+    
+    inputs
+    ======
+        f : callable
+            function of the form f(x, *args, **kwargs). Object that f
+            returns must be able to + and - itself, and divide by float as
+            well as type(h). Object returned is typically float
+        
+        x : user defined
+            independent variable(s). Must be able to add and subtract
+            type(h). Typically float.
+        
+        h : user defined, optional
+            step size used for the differencing. Must be albe to add and
+            subtract with type(x) and divide with object that f returns.
+            Typically a float. Defaults to 0.5e-2
+        
+        args : tuple, optional
+            additional arguments to be passed to f
+        
+        kwargs : dictionary, optional
+            additional keyword arguments to be passed to f
+    
+    returns
+    =======
+        user defined by f
+            derivative of f with respect to x by central differencing with
+            step size h
+    '''
+    if isIterable(h): return (f(x+h, *args, **kwargs)-f(x-h, *args, **kwargs))/2./sum(h)
     return (f(x+h, *args, **kwargs)-f(x-h, *args, **kwargs))/2./h
 
 def newtonsMethod(f, val, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwargs = {}, derivative=centralDifference, display=False, bounds = (None,None), relaxationFactor=1.0):
@@ -383,7 +416,7 @@ class zList():
         self.__calcJ()
         
         if val == 'ascend':
-            self.__matrix = [i for i in range(1,self.__J+1)]
+            self.__matrix = [i for i in range(self.__J)]
         elif val == 'descend':
             self.__matrix = [i for i in range(self.__J,0,-1)]
         elif isIterable(val):
@@ -694,6 +727,12 @@ class zList():
     def __rtruediv__(self, x):
         return self.__rdiv__(x)
     
+    def __eq__(self, x):
+        if self.shape != x.shape: return False
+        for j in range(self.__J):
+            if self[j] != x[j]: return False
+        return True
+    
     def transpose(self, axis=(0,1)):
         # if self.__V != 2: raise ValueError('transpose requires that the zList be 2D instead of {}D'.format(self.__V))
         
@@ -943,7 +982,7 @@ class zList():
         self.__J = len(z)
         self.__matrix = [i for i in z]
     
-    def plot(self):
+    def array(self):
         return np.array(self).reshape(self.shape)
     
     def write(self, fn):
@@ -964,25 +1003,72 @@ class zList():
         return self
 
 
-def jacobian(f, x, h=0.5e-2, args=(), kwargs={}):
-    n = len(x)
-    if len(f) != n: raise ValueError('jacobian requires the same number of variables as equations')
+def jacobian(f, x, df=centralDifference, h=0.5e-2, return_np=True, args=(), kwargs={}):
+    '''
+    Computes the jacobian of a system.
     
+    inputs
+    ======
+        f : sequence type
+            sequence type iterable object where each element is callable of
+            the form f[0](x, *args, **kwargs). Object returned by callable
+            elements must be able to add and subtract similar types, divide
+            floats type(h[0]). Object returned is typically float
+        
+        x : sequence type
+            sequence type iterable object where the elements are the
+            independent variables of the system. Element types must be able
+            to add and subtract type(h[0]). Element types are typically
+            floats.
+        
+        df : callable, optional
+            callable object of the form, df(f, x, h=0.5e-2, *args, **kwargs)
+            that returns the derivative of f with respect to x, potentially
+            requiring a step size h. Defaults to centralDifference. See 
+            centralDifference for more information.
+        
+        h : sequence type or user defined, optional
+            step size to be used when numerically computing the derivative.
+            When given as a sequence type, the length should match the that
+            of x. 
+    '''
+    ## get number of equations and number of independent variables
+    m = len(f)
+    n = len(x)
+    ## ensure that h is iterable with length equal to x
     if isIterable(h):
-        if len(h) != n: raise ValueError('jacobian step size h must either be the same length as number of equations or a constant value')
+        if len(h) != n: raise ValueError('jacobian step size h must either be the same length as number of variables or a constant value')
     else:
         h = [h]*n
-    
-    grad = zList(n,n)
-    for i in range(n):
+    ## initialize jacobian
+    jaco = zList(m,n)
+    ## loop thru equations
+    for i in range(m):
+        ## loop thru variables
         for j in range(n):
-            temp = x[:]
-            temp[j] += h[j]
-            fpos = f[i](temp, *args, **kwargs)
-            temp[j] -= 2.*h[j]
-            fneg = f[i](temp, *args, **kwargs)
-            grad[i,j] = (fpos-fneg)/2./h[j]
-    return grad
+            # ## reset temp variable to x
+            # temp = x[:]
+            # ## update jth 
+            # temp[j] += h[j]
+            # fpos = f[i](temp, *args, **kwargs)
+            # temp[j] -= 2.*h[j]
+            # fneg = f[i](temp, *args, **kwargs)
+            # jaco[i,j] = (fpos-fneg)/2./h[j]
+            
+            ## compute temporary step zlist
+            # temp = 
+            
+            # temp = zList(n, val=0.)
+            # temp[j] = h[j]
+            
+            ## compute the ij component of the jacobian with df
+            jaco[i,j] = df( f[i],
+                            zList(n,val=x),
+                            h=zList(n, val=[0. if k != j else h[j] for k in range(n)]),
+                            args=args,
+                            kwargs=kwargs)
+    if return_np: return jaco.array()
+    return jaco
 
 def newtonsMethodSystem(f, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwargs={}, jacobian=jacobian, display=False, bounds=(None,None), la=1.):
     n = len(xo)
