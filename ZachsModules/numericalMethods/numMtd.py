@@ -1009,7 +1009,7 @@ def jacobian(f, x, df=centralDifference, h=0.5e-2, return_np=True, args=(), kwar
     
     inputs
     ======
-        f : sequence type
+        f : sequence type or callable
             sequence type iterable object where each element is callable of
             the form f[0](x, *args, **kwargs). Object returned by callable
             elements must be able to add and subtract similar types, divide
@@ -1023,9 +1023,9 @@ def jacobian(f, x, df=centralDifference, h=0.5e-2, return_np=True, args=(), kwar
         
         df : callable, optional
             callable object of the form, df(f, x, h=0.5e-2, *args, **kwargs)
-            that returns the derivative of f with respect to x, potentially
-            requiring a step size h. Defaults to centralDifference. See 
-            centralDifference for more information.
+            that returns the derivative of f with respect to x, with a step
+            size h. Defaults to centralDifference. See centralDifference for
+            more information.
         
         h : sequence type or user defined, optional
             step size to be used when numerically computing the derivative.
@@ -1033,36 +1033,37 @@ def jacobian(f, x, df=centralDifference, h=0.5e-2, return_np=True, args=(), kwar
             of x. 
     '''
     ## get number of equations and number of independent variables
-    m = len(f)
     n = len(x)
+    if isIterable(f):
+        m = len(f)
+        nvec = (m,n)
+    else:
+        m = 0
+        nvec = (n,)
     ## ensure that h is iterable with length equal to x
     if isIterable(h):
         if len(h) != n: raise ValueError('jacobian step size h must either be the same length as number of variables or a constant value')
     else:
         h = [h]*n
     ## initialize jacobian
-    jaco = zList(m,n)
-    ## loop thru equations
-    for i in range(m):
+    jaco = zList(*nvec)
+    ## check for multiple equations
+    if m > 0:
+        ## loop thru equations
+        for i in range(m):
+            ## loop thru variables
+            for j in range(n):
+                ## compute the ij component of the jacobian with df
+                jaco[i,j] = df( f[i],
+                                zList(n,val=x),
+                                h=zList(n, val=[0. if k != j else h[j] for k in range(n)]),
+                                args=args,
+                                kwargs=kwargs)
+    else:
         ## loop thru variables
         for j in range(n):
-            # ## reset temp variable to x
-            # temp = x[:]
-            # ## update jth 
-            # temp[j] += h[j]
-            # fpos = f[i](temp, *args, **kwargs)
-            # temp[j] -= 2.*h[j]
-            # fneg = f[i](temp, *args, **kwargs)
-            # jaco[i,j] = (fpos-fneg)/2./h[j]
-            
-            ## compute temporary step zlist
-            # temp = 
-            
-            # temp = zList(n, val=0.)
-            # temp[j] = h[j]
-            
-            ## compute the ij component of the jacobian with df
-            jaco[i,j] = df( f[i],
+            ## compute the j component of the jacobian with df
+            jaco[j] = df(   f,
                             zList(n,val=x),
                             h=zList(n, val=[0. if k != j else h[j] for k in range(n)]),
                             args=args,

@@ -47,12 +47,15 @@ def test_jacobian():
         return kw2*x[0] +  a1*x[1] +  a2*x[2] + kw1*sum(x)
     funcs = [f0, f1, f2, f3]
     x0 = [1.,1.,1.]
-    J = nm.jacobian(funcs, x0, h=stepSizes, return_np=False, args=args, kwargs=kws)
-    JJ = nm.zList(4,3, val=(   5.0, 5.999999999999872, 6.999999999997897,
+    
+    assert nm.jacobian(funcs, x0, h=stepSizes, return_np=False, args=args, kwargs=kws) == nm.zList(4,3, val=(
+                            5.0, 5.999999999999872, 6.999999999997897,
                             2.9999999999999893, 4.000000000000092, 4.999999999999005,
                             5.0, 5.999999999999872, 3.0000000000001137,
                             7.0000000000000195, 3.9999999999999147, 4.999999999999005))
-    assert J == JJ
+        
+    assert nm.jacobian(f0, x0, h=stepSizes, return_np=False, args=args, kwargs=kws) == nm.zList(3, val=(
+                            5.0, 5.999999999999872, 6.999999999997897))
 
 def test_newtonsMethodSystem():
     assert 'newtonsMethodSystem' in dir(nm)
