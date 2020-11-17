@@ -109,21 +109,24 @@ class Progress():
     def __init__(self, Total, title=None, border=True, msg=[]):
         self.__total = Total
         self.__count = 0
-        self.__perc = 0.
-        self.__t = None
-        self.__delta = 0.
-        self.__timer = None
+        # self.__perc = 0.
+        self.__rollTimer = dt.now()
+        self.__rollDelta = 0.2
+        self.__rollCount = -1
+        self.__timer = dt.now()
         
         self.__kw = {'title':title, 'border':border}
         if type(msg) != list: msg = [msg]
         self.msg = msg
+        text(*self.msg, ' ', ' ', **self.__kw)
         self.display()
     
     def __str__(self):
-        self.__perc = self.__count/self.__total*100
-        s = '{:7.3f}% finished'.format(self.__perc)
-        self.increment()
-        return s
+        # self.__perc = self.__count/self.__total*100
+        # s = '{:7.3f}% finished'.format(self.__perc)
+        # self.increment()
+        # return s
+        pass
     
     def increment(self):
         self.__count += 1
@@ -145,81 +148,114 @@ class Progress():
     
     def display(self):
         rolling = '-\\|/'
-        
-        if self.__t == None:
-            self.__t = zt()
-            self.__timer = zt()
-            text(*self.msg, ' ', ' ', **self.__kw)
-        
-        s = str(self)
-        
-        j = 0
-        for i in range(10):
-            if self.__perc >= i*10:
-                j = i
-        
-        self.__t.length()
-        sec = self.__t.timeLength.getTotalSeconds()
-        
-        
+        rollDelta = (dt.now() - self.__rollTimer).total_seconds()
         
         p2s = False
-        
-        if sec <= 0.2:
-            r = 0
-            if self.__delta == 0.:
-                p2s = True
-                self.__delta = 0.2
-        elif sec <= 0.4:
-            r = 1
-            if self.__delta == 0.2:
-                p2s = True
-                self.__delta = 0.4
-        elif sec <= 0.6:
-            r = 2
-            if self.__delta == 0.4:
-                p2s = True
-                self.__delta = 0.6
-        elif sec <= 0.8:
-            r = 3
-            if self.__delta == 0.6:
-                p2s = True
-                self.__delta = 0.8
-        else:
-            r = 0
+        if rollDelta >= self.__rollDelta or self.__rollCount == -1:
             p2s = True
-            self.__delta = 0.
-            self.__t = zt()
+            self.__rollTimer = dt.now()
+            self.__rollCount += 1
+            if self.__rollCount >= len(rolling):
+                self.__rollCount = 0
         
-        base = u'\u039e'*j + rolling[r] + '-'*(9-j) + ' '
-        if self.__perc >= 100.:
-            base = u'\u039e'*10 + ' '
-            # print('\b'*(10+11+17) + ' '*10 + base + s, **edits)
-            # print()
-            n = 4
-            if self.__kw['title'] != None: n += 1
-            if self.__kw['border']: n += 2
-            deleteLastLines(n=n+len(self.msg))
-            text(*self.msg, base+s, 'Ran for {}'.format(str(self.__timer)[12:]), **self.__kw)
-        elif p2s:
-            
-            if self.__perc > 0.:
-                self.__timer.length()
-                SEC = self.__timer.timeLength.getTotalSeconds()
-                SEC = SEC / self.__perc * 100. - SEC
-                HRS = SEC // 3660.
-                SEC -= HRS * 3660.
-                MIN = SEC // 60.
-                SEC -= MIN * 60.
-                etr = 'Estimated Time Remaining is {:0>2.0f}:{:0>2.0f}:{:0>9.6f}'.format(HRS, MIN, SEC)
+        perc = self.__count / self.__total * 100.
+        self.increment()
+        
+        if not p2s and perc < 100.: return
+        
+        for i in range(10):
+            if perc >= i*10:
+                j = i
+        
+        if perc < 100.:
+            bar = u'\u039e'*j + rolling[self.__rollCount] + '-'*(9-j)
+            if perc <= 0.:
+                etr = 'ETR -:--:--.------'
             else:
-                etr = 'Estimated Time Remaining is --:--:--.------'
-            
+                time = (dt.now() - self.__timer).total_seconds()
+                etr = 'ETR {}'.format(td(seconds=time / perc * 100. - time))
+        else:
+            bar = u'\u039e'*10
+            etr = 'Run time {}'.format(dt.now()-self.__timer)
+        bar += ' '*4 + '{:7.3f}%'.format(perc)
+        
+        if p2s or perc >= 100.:
             n = 4
             if self.__kw['title'] != None: n += 1
             if self.__kw['border']: n += 2
             deleteLastLines(n=n+len(self.msg))
-            text(*self.msg, base+s, etr, **self.__kw)
+            text(*self.msg, bar, etr, **self.__kw)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        # self.__t.length()
+        # sec = self.__t.timeLength.getTotalSeconds()
+        
+        
+        
+        # p2s = False
+        
+        # if sec <= 0.2:
+            # r = 0
+            # if self.__delta == 0.:
+                # p2s = True
+                # self.__delta = 0.2
+        # elif sec <= 0.4:
+            # r = 1
+            # if self.__delta == 0.2:
+                # p2s = True
+                # self.__delta = 0.4
+        # elif sec <= 0.6:
+            # r = 2
+            # if self.__delta == 0.4:
+                # p2s = True
+                # self.__delta = 0.6
+        # elif sec <= 0.8:
+            # r = 3
+            # if self.__delta == 0.6:
+                # p2s = True
+                # self.__delta = 0.8
+        # else:
+            # r = 0
+            # p2s = True
+            # self.__delta = 0.
+            # self.__t = zt()
+        
+        # base = u'\u039e'*j + rolling[r] + '-'*(9-j) + ' '
+        # if self.__perc >= 100.:
+            # base = u'\u039e'*10 + ' '
+            # #print('\b'*(10+11+17) + ' '*10 + base + s, **edits)
+            # #print()
+            # n = 4
+            # if self.__kw['title'] != None: n += 1
+            # if self.__kw['border']: n += 2
+            # deleteLastLines(n=n+len(self.msg))
+            # text(*self.msg, base+s, 'Ran for {}'.format(str(self.__timer)[12:]), **self.__kw)
+        # elif p2s:
+            
+            # if self.__perc > 0.:
+                # self.__timer.length()
+                # SEC = self.__timer.timeLength.getTotalSeconds()
+                # SEC = SEC / self.__perc * 100. - SEC
+                # HRS = SEC // 3660.
+                # SEC -= HRS * 3660.
+                # MIN = SEC // 60.
+                # SEC -= MIN * 60.
+                # etr = 'Estimated Time Remaining is {:0>2.0f}:{:0>2.0f}:{:0>9.6f}'.format(HRS, MIN, SEC)
+            # else:
+                # etr = 'Estimated Time Remaining is --:--:--.------'
+            
+            # n = 4
+            # if self.__kw['title'] != None: n += 1
+            # if self.__kw['border']: n += 2
+            # deleteLastLines(n=n+len(self.msg))
+            # text(*self.msg, base+s, etr, **self.__kw)
 
 from datetime import datetime as dt
 from datetime import timedelta as td
@@ -255,6 +291,9 @@ class oneLineProgress():
     def Set(self, count):
         self.count = count
     
+    def setMessage(self, msg):
+        self.msg = msg
+    
     def display(self):
         rolling = '-\\|/'
         rollDelta = (dt.now()-self.rollTimer).total_seconds()
@@ -274,7 +313,8 @@ class oneLineProgress():
         
         
         s = '\r' + ' '*(len(self.msg)+50) + '\r'
-        s += colorText(self.msg, colorFG='blue') + ' '*4
+        # s += colorText(self.msg, colorFG='blue') + ' '*4
+        s += self.msg + ' '*4
         
         # j = 0
         for i in range(10):
@@ -282,9 +322,11 @@ class oneLineProgress():
                 j = i
         
         if perc < 100.:
-            s += colorText(u'\u039e'*j + rolling[self.rollCount] + '-'*(9-j), colorFG='green', bold=True)
+            # s += colorText(u'\u039e'*j + rolling[self.rollCount] + '-'*(9-j), colorFG='green', bold=True)
+            s += u'\u039e'*j + rolling[self.rollCount] + '-'*(9-j)
         else:
-            s += colorText(u'\u039e'*10, colorFG='green', bold=True)
+            # s += colorText(u'\u039e'*10, colorFG='green', bold=True)
+            s += u'\u039e'*10
         
         # for i in range(1,11):
             # if i*10 <= perc:
