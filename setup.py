@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name = 'ZachsModules',
-    version = '0.0.1',
+    version = '0.0.2',
     author = 'Zach Montgomery',
     author_email = 'zachary.s.montgomery@gmail.com',
     description = 'Collection of common functions and classes',

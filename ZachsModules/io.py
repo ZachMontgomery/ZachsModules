@@ -104,7 +104,7 @@ def deleteLastLines(n=1):
         stdout.write('\x1b[1A')
         stdout.write('\x1b[2K')
 
-class Progress():
+class xProgress():
     
     def __init__(self, Total, title=None, border=True, msg=[]):
         self.__total = Total
@@ -349,6 +349,79 @@ class oneLineProgress():
             etr = td(seconds=time / perc * 100. - time)
             s += ' '*4 + 'ETR = {}'.format(etr)
         print(s, end='')
+        return
+
+class Progress():
+    
+    def __init__(self, Total, title=None, border=True, msg=[]):
+        self.total = Total
+        self.__kw = {'title':title, 'border':border}
+        if type(msg) != list: msg = [msg]
+        self.msg = msg
+        self.count = 0
+        self.start = dt.now()
+        self.rollTimer = dt.now()
+        self.rollCount = -1
+        self.rollDelta = 0.2
+        self.display()
+    
+    def increment(self):
+        self.count += 1
+    
+    def decrement(self):
+        self.count -= 1
+    
+    def __str__(self):
+        pass
+    
+    def __len__(self):
+        l = len(str(self))
+        self.decrement()
+        return l
+    
+    def Set(self, count):
+        self.count = count
+    
+    def display(self):
+        rolling = '-\\|/'
+        rollDelta = (dt.now()-self.rollTimer).total_seconds()
+        
+        p2s = False
+        if rollDelta >= self.rollDelta or self.rollCount == -1:
+            p2s = True
+            self.rollTimer = dt.now()
+            self.rollCount += 1
+            if self.rollCount >= len(rolling):
+                self.rollCount = 0
+        
+        perc = self.count / self.total * 100.
+        self.increment()
+        
+        if not p2s and perc < 100.: return
+        
+        for i in range(10):
+            if perc >= i*10:
+                j = i
+        
+        if perc < 100.:
+            s = u'\u039e'*j + rolling[self.rollCount] + '-'*(9-j)
+        else:
+            s = u'\u039e'*10
+        s += ' '*4 + '{:7.3f}%'.format(perc)
+        
+        if perc <= 0:
+            etr = 'ETR is -:--:--.------'
+        elif perc >= 100.:
+            etr = 'Run Time is {}'.format(dt.now()-self.start)
+        else:
+            time = (dt.now()-self.start).total_seconds()
+            etr = 'ETR is {}'.format(td(seconds=time / perc * 100. - time))
+        
+        n = 4
+        if self.__kw['title'] != None: n += 1
+        if self.__kw['border']: n += 2
+        deleteLastLines(n=n+len(self.msg))
+        text(*self.msg, s, etr, **self.__kw)
         return
 
 
