@@ -363,6 +363,7 @@ class Progress():
         self.rollTimer = dt.now()
         self.rollCount = -1
         self.rollDelta = 0.2
+        text(*self.msg, ' ', ' ', **self.__kw)
         self.display()
     
     def increment(self):
