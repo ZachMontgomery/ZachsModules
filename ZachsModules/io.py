@@ -383,6 +383,9 @@ class Progress():
     def Set(self, count):
         self.count = count
     
+    def getCurrentRunTime(self):
+        return dt.now()-self.start
+    
     def display(self):
         rolling = '-\\|/'
         rollDelta = (dt.now()-self.rollTimer).total_seconds()
