@@ -443,11 +443,16 @@ def mySplit(S,sep='- :.'):
     return o
 
 
-def appendToFile(*vals):
-    f = open(vals[0], 'a')
-    f.write( csvLineWrite(*vals[1:]) )
-    f.close()
-
+def appendToFile(*vals, multiLine=False):
+    if multiLine:
+        f = open(vals[0], 'a')
+        for line in vals[1:]:
+            f.write( csvLineWrite(*line) )
+        f.close()
+    else:
+        f = open(vals[0], 'a')
+        f.write( csvLineWrite(*vals[1:]) )
+        f.close()
 
 from tempfile import TemporaryFile as tf
 
