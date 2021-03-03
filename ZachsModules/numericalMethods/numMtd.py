@@ -1,6 +1,8 @@
-from ..io import oneLineProgress
+from ..io import oneLineProgress, Progress, appendToFile
 from ..misc import isIterable
-import numpy as np
+# import numpy as np
+from ..aerodynamics import np
+from multiprocessing import Pool, cpu_count
 
 nan = float('nan')
 
@@ -1603,3 +1605,53 @@ def zSort(v, *W, ascend=True, verbose=True, msg='Sorting the arrays'):
             w[i] = temp
         if verbose: prog.display()
 
+
+def runCases(func, it, fn, nBatch=None, progKW={}, chunkSize=1, cpus=cpu_count()):
+    '''
+    func: function handle that runs a single case that takes in a single
+        argument (the arg can be a tuple of multiple objects) and returns a
+        tuple of results to write to a line of the file
+    it: an iterable contianing the input arguments for all the cases to be
+        run (if multiple input args are needed for a single case, they need
+        to be packaged together into a tuple).
+    fn: str of the filename to write the data to. Writes the data into a csv
+        format, with one line per case
+    nBatch: number of cases to be run in parallel before writing the results
+        to the file, optional
+    chunkSize: number of cases to be sent to a single cpu during the
+        parallel processing, defaults to 1
+    cpus: number of cpus to use for parallel processing, defaults to all the
+        cpus on your machine
+    progKW: dictionary of keyword arguments to pass to the Progress bar,
+        optional
+    '''
+    ## determine total number of cases
+    J = len(it)
+    ## determine batch size if not given
+    if nBatch == None:
+        if J > 10:
+            nBatch = J // 10
+        else:
+            nBatch = J
+    ## determine the number of batch runs
+    nRuns = J // nBatch
+    if J % nBatch != 0: nRuns += 1
+    ## setup progress bar
+    prog = Progress(nRuns, **progKW)
+    ## loop thru batch runs
+    for i in range(0,J,nBatch):
+        if i+nBatch>J:          ## check to see if batch won't be full size
+            n = J - i
+            x = [None] * n
+            with Pool(cpus) as pool:
+                for j,ans in enumerate(pool.imap_unordered(func, it[i:], chunkSize)):
+                    x[j] = ans
+        else:
+            x = [None] * nBatch
+            with Pool(cpus) as pool:
+                for j,ans in enumerate(pool.imap_unordered(func, it[i:i+nBatch], chunkSize)):
+                    x[j] = ans
+        
+        appendToFile(fn, *x, multiLine=True)
+        
+        prog.display()
