@@ -595,3 +595,47 @@ def textAlternate(*word, c=77, border=True, title=None, p2s=True, **kw):
     if p2s: print(s, end='')
     return s
 
+class Timer:
+    
+    def __init__(self):
+        self.startTime = None
+        self.stopTime = None
+        self.duration = None
+        self.laps = []
+        self.start()
+    
+    def start(self):
+        self.startTime = dt.now()
+    
+    def stop(self):
+        self.stopTime = dt.now()
+        self.length()
+        return self.duration
+    
+    def length(self):
+        if self.stopTime == None:
+            self.duration = dt.now() - self.startTime
+        else:
+            self.duration = self.stopTime - self.startTime
+        return self.duration
+    
+    def reset(self):
+        self = Timer()
+    
+    def lap(self):
+        if len(self.laps) == 0:
+            self.laps.append( self.length() )
+        else:
+            summ = self.laps[0]
+            for i in self.laps[1:]: summ += i
+            self.laps.append( self.length() - summ )
+        return self.laps[-1]
+    
+    # def __str__(self):
+        # if self.duration == None:
+            # return str(dt.now() - self.startTime)
+        # else:
+            # return str(self.duration)
+    
+    # def __len__(self):
+        # return len(str(self.timeLength))
