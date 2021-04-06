@@ -77,7 +77,7 @@ def text(*word, c=77, border=True, title=None, p2s=True):
     if p2s: print(s, end='')
     return s
 
-def oneLineText(word, c=77, p=4, b='=', border=True, p2s=True):
+def oneLineText(word, c=77, p=4, b='=', border=True, p2s=True, extraNewLine=False):
     s = ''
     if len(word) > c: c = len(word)
     l = int((c-len(word)) / 2) - p
@@ -91,6 +91,7 @@ def oneLineText(word, c=77, p=4, b='=', border=True, p2s=True):
         if l > 0:
             s += ' '*p + b*l
         else: s += ' '*(l+p)
+    if extraNewLine: s += '\n'
     if p2s: print(s)
     return s
 
@@ -630,12 +631,4 @@ class Timer:
             for i in self.laps[1:]: summ += i
             self.laps.append( self.length() - summ )
         return self.laps[-1]
-    
-    # def __str__(self):
-        # if self.duration == None:
-            # return str(dt.now() - self.startTime)
-        # else:
-            # return str(self.duration)
-    
-    # def __len__(self):
-        # return len(str(self.timeLength))
+
