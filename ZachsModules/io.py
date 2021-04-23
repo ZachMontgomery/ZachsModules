@@ -632,3 +632,6 @@ class Timer:
             self.laps.append( self.length() - summ )
         return self.laps[-1]
 
+def pauseTimed(sec):
+    timer = Timer()
+    while timer.length().total_seconds() < sec: pass
