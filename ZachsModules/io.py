@@ -264,7 +264,7 @@ from datetime import timedelta as td
 
 class oneLineProgress():
     
-    def __init__(self, Total, msg='', showETR=True):
+    def __init__(self, Total, msg='', showETR=True, deleteLine=True):
         self.total = Total
         self.msg = msg
         self.count = 0
@@ -273,6 +273,7 @@ class oneLineProgress():
         self.rollTimer = dt.now()
         self.rollCount = -1
         self.rollDelta = 0.2
+        self.deleteLine = deleteLine
         self.display()
     
     def increment(self):
@@ -312,8 +313,10 @@ class oneLineProgress():
         
         if not p2s and perc < 100.: return
         
-        
-        s = '\r' + ' '*(len(self.msg)+50) + '\r'
+        if self.deleteLine:
+            s = '\r' + ' '*(len(self.msg)+50) + '\r'
+        else:
+            s = ''
         # s += colorText(self.msg, colorFG='blue') + ' '*4
         s += self.msg + ' '*4
         
