@@ -314,7 +314,7 @@ class oneLineProgress():
         if not p2s and perc < 100.: return
         
         if self.deleteLine:
-            s = '\r' + ' '*(len(self.msg)+50) + '\r'
+            s = '\r' + ' '*(len(self.msg)+100) + '\r'
         else:
             s = ''
         # s += colorText(self.msg, colorFG='blue') + ' '*4
