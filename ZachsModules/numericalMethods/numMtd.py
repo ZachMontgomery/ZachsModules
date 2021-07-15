@@ -1580,12 +1580,12 @@ def odeRK4(dfunc, times, xo, ufunc=None, h='auto', n=300, tol=1e-5, verbose=True
     else:
         return t, x, H, U
 
-def zSort(v, *W, ascend=True, verbose=True, msg='Sorting the arrays'):
+def zSort(v, *W, ascend=True, verbose=True, msg='Sorting the arrays', c=0):
     k = len(v)
     for w in W:
         if len(w) != k: raise ValueError('All arrays need to be the same length in zSort')
     c = []
-    if verbose: prog = oneLineProgress(sum([i for i in range(k)])+len(W), msg=msg)
+    if verbose: prog = oneLineProgress(sum([i for i in range(k)])+len(W), msg=msg, c=c)
     for m in range(k):
         for j in range(k-1,m,-1):
             i = j-1

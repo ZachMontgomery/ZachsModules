@@ -1,6 +1,7 @@
 # from ..aerodynamics import np
 from .misc import isIterable
 from numpy import float64
+from os import popen
 
 def csvLineWrite(*obj, sep=',', end='\n'):
     line = ''
@@ -53,7 +54,8 @@ def csvLineRead(line, sep=',', end='\n', columns=None, obj_type=None):
                     data[i] = s
         return data
 
-def text(*word, c=77, border=True, title=None, p2s=True):
+def text(*word, c=0, border=True, title=None, p2s=True):
+    if c == 0: c = int(popen('stty size', 'r').read().split()[-1])
     if len(word) == 1: word = word[0]
     s = '\n'
     if type(word) == list or type(word) == tuple:
@@ -77,7 +79,8 @@ def text(*word, c=77, border=True, title=None, p2s=True):
     if p2s: print(s, end='')
     return s
 
-def oneLineText(word, c=77, p=4, b='=', border=True, p2s=True, extraNewLine=False):
+def oneLineText(word, c=0, p=4, b='=', border=True, p2s=True, extraNewLine=False):
+    if c == 0: c = int(popen('stty size', 'r').read().split()[-1])
     s = ''
     if len(word) > c: c = len(word)
     l = int((c-len(word)) / 2) - p
@@ -313,14 +316,13 @@ class oneLineProgress():
         
         if not p2s and perc < 100.: return
         
-        if self.deleteLine:
-            s = '\r' + ' '*(len(self.msg)+100) + '\r'
-        else:
-            s = ''
+        c = int(popen('stty size', 'r').read().split()[-1])
+        
+        s = ''
+        
         # s += colorText(self.msg, colorFG='blue') + ' '*4
         s += self.msg + ' '*4
         
-        # j = 0
         for i in range(10):
             if perc >= i*10:
                 j = i
@@ -339,8 +341,9 @@ class oneLineProgress():
                 # s += '-'
         s += ' '*4 + '{:7.3f}%'.format(perc)
         if not self.showETR:
+            if len(s) > c: s = s[:c]
             if perc >= 100.: s += '\n'
-            print(s, end='')
+            print('\r' + ' '*c + '\r' + s, end='')
             return
         
         if perc <= 0:
@@ -352,14 +355,16 @@ class oneLineProgress():
             time = (dt.now()-self.start).total_seconds()
             etr = td(seconds=time / perc * 100. - time)
             s += ' '*4 + 'ETR = {}'.format(etr)
-        print(s, end='')
+        if len(s) > c: s = s[:c]
+        print('\r' + ' '*c + '\r' + s, end='')
         return
 
 class Progress():
     
-    def __init__(self, Total, title=None, border=True, msg=[]):
+    def __init__(self, Total, title=None, border=True, msg=[], c=0):
+        if c==0: self.c = int(popen('stty size', 'r').read().split()[-1])
         self.total = Total
-        self.__kw = {'title':title, 'border':border}
+        self.__kw = {'title':title, 'border':border, 'c':self.c}
         if type(msg) != list: msg = [msg]
         self.msg = msg
         self.count = 0
