@@ -12,4 +12,4 @@ from . import misc
 from . import zPlotter as zp
 from .zPlotter import plt
 
-__all__ = [nm, aero, io, misc, zp, plt]
+__all__ = ['nm', 'aero', 'io', 'misc', 'zp', 'plt']
