@@ -316,7 +316,10 @@ class oneLineProgress():
         
         if not p2s and perc < 100.: return
         
-        c = int(popen('stty size', 'r').read().split()[-1])
+        try:
+            c = int(popen('stty size', 'r').read().split()[-1])
+        except:
+            c = 77
         
         s = ''
         
