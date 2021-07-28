@@ -55,7 +55,7 @@ def csvLineRead(line, sep=',', end='\n', columns=None, obj_type=None):
         return data
 
 def text(*word, c=0, border=True, title=None, p2s=True):
-    if c == 0: c = int(popen('stty size', 'r').read().split()[-1])
+    if c == 0: c = getTerminalColumnWidth()
     if len(word) == 1: word = word[0]
     s = '\n'
     if type(word) == list or type(word) == tuple:
@@ -80,7 +80,7 @@ def text(*word, c=0, border=True, title=None, p2s=True):
     return s
 
 def oneLineText(word, c=0, p=4, b='=', border=True, p2s=True, extraNewLine=False):
-    if c == 0: c = int(popen('stty size', 'r').read().split()[-1])
+    if c == 0: c = getTerminalColumnWidth()
     s = ''
     if len(word) > c: c = len(word)
     l = int((c-len(word)) / 2) - p
@@ -316,10 +316,7 @@ class oneLineProgress():
         
         if not p2s and perc < 100.: return
         
-        try:
-            c = int(popen('stty size', 'r').read().split()[-1])
-        except:
-            c = 77
+        c = getTerminalColumnWidth()
         
         s = ''
         
@@ -365,7 +362,7 @@ class oneLineProgress():
 class Progress():
     
     def __init__(self, Total, title=None, border=True, msg=[], c=0):
-        if c==0: self.c = int(popen('stty size', 'r').read().split()[-1])
+        if c==0: self.c = getTerminalColumnWidth()
         self.total = Total
         self.__kw = {'title':title, 'border':border, 'c':self.c}
         if type(msg) != list: msg = [msg]
@@ -646,3 +643,10 @@ class Timer:
 def pauseTimed(sec):
     timer = Timer()
     while timer.length().total_seconds() < sec: pass
+
+def getTerminalColumnWidth():
+    try:
+        return int(popen('stty size', 'r').read().split()[-1])-1
+    except:
+        return 77
+
