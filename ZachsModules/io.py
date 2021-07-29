@@ -316,8 +316,6 @@ class oneLineProgress():
         
         if not p2s and perc < 100.: return
         
-        c = getTerminalColumnWidth()
-        
         s = ''
         
         # s += colorText(self.msg, colorFG='blue') + ' '*4
@@ -341,9 +339,13 @@ class oneLineProgress():
                 # s += '-'
         s += ' '*4 + '{:7.3f}%'.format(perc)
         if not self.showETR:
-            if len(s) > c: s = s[:c]
-            if perc >= 100.: s += '\n'
-            print('\r' + ' '*c + '\r' + s, end='')
+            if self.deleteLine:
+                c = getTerminalColumnWidth()
+                if len(s) > c: s = s[:c]
+                if perc >= 100.: s += '\n'
+                print('\r' + ' '*c + '\r' + s, end='')
+            else:
+                print(s)
             return
         
         if perc <= 0:
@@ -355,8 +357,13 @@ class oneLineProgress():
             time = (dt.now()-self.start).total_seconds()
             etr = td(seconds=time / perc * 100. - time)
             s += ' '*4 + 'ETR = {}'.format(etr)
-        if len(s) > c: s = s[:c]
-        print('\r' + ' '*c + '\r' + s, end='')
+        
+        if self.deleteLine:
+            c = getTerminalColumnWidth()
+            if len(s) > c: s = s[:c]
+            print('\r' + ' '*c + '\r' + s, end='')
+        else:
+            print(s)
         return
 
 class Progress():

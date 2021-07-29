@@ -1100,7 +1100,8 @@ def newtonsMethodSystem(f, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwar
     return xn
 
 def isClose(x, y, tol=1.e-12):
-    return y-tol <= x and x <= y+tol
+    # return y-tol <= x and x <= y+tol
+    return abs(x-y) <= tol
 
 
 
