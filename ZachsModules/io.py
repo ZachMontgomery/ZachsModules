@@ -267,7 +267,7 @@ from datetime import timedelta as td
 
 class oneLineProgress():
     
-    def __init__(self, Total, msg='', showETR=True, deleteLine=True):
+    def __init__(self, Total, msg='', showETR=True, deleteLine=True, c=0):
         self.total = Total
         self.msg = msg
         self.count = 0
@@ -277,6 +277,10 @@ class oneLineProgress():
         self.rollCount = -1
         self.rollDelta = 0.2
         self.deleteLine = deleteLine
+        if c == 0:
+            self.c = getTerminalColumnWidth()
+        else:
+            self.c = c
         self.display()
     
     def increment(self):
@@ -340,10 +344,9 @@ class oneLineProgress():
         s += ' '*4 + '{:7.3f}%'.format(perc)
         if not self.showETR:
             if self.deleteLine:
-                c = getTerminalColumnWidth()
-                if len(s) > c: s = s[:c]
+                if len(s) > self.c: s = s[:self.c]
                 if perc >= 100.: s += '\n'
-                print('\r' + ' '*c + '\r' + s, end='')
+                print('\r' + ' '*self.c + '\r' + s, end='')
             else:
                 print(s)
             return
@@ -359,9 +362,8 @@ class oneLineProgress():
             s += ' '*4 + 'ETR = {}'.format(etr)
         
         if self.deleteLine:
-            c = getTerminalColumnWidth()
-            if len(s) > c: s = s[:c]
-            print('\r' + ' '*c + '\r' + s, end='')
+            if len(s) > self.c: s = s[:self.c]
+            print('\r' + ' '*self.c + '\r' + s, end='')
         else:
             print(s)
         return
