@@ -1,3 +1,4 @@
+from ...misc import isIterable
 
 class runningAverage():
     
