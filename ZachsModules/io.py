@@ -659,3 +659,43 @@ def getTerminalColumnWidth():
     except:
         return 77
 
+from tempfile import TemporaryFile as tf
+
+class zemptyFile():
+    
+    
+    def __init__(self):
+        self.__f = tf(mode='w+')
+    
+    def zwrite(self, *x):
+        self.__f.write( csvLineWrite(*x) )
+    
+    # def readline(self, **kw):
+        # s = self.__s.splitlines()
+        # vals = csvLineRead(s[self.__i], **kw)
+        # self.__i += 1
+        # return vals
+    
+    # def seek(self, i):
+        # self.__i = i
+    
+    # def getIndex(self):
+        # return self.__i
+    
+    # def getValues(self, **kw):
+        # s = self.__s.splitlines()
+        # col = len(s[0].split(','))
+        # data = zList(len(s), col)
+        # for i in range(len(s)):
+            # data[i,:] = csvLineRead(s[i], **kw)
+        # return data
+    
+    def getValues(self, **kw):
+        self.__f.seek(0)
+        raw = self.__f.readlines()
+        self.__f.close()
+        col = len(raw[0].split(','))
+        data = zList(len(raw), col)
+        for i,line in enumerate(raw):
+            data[i,:] = csvLineRead(line, **kw)
+        return data

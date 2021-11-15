@@ -1,4 +1,4 @@
-from ..io import oneLineProgress, Progress, appendToFile
+from ..io import oneLineProgress, Progress, appendToFile, zemptyFile
 from ..misc import isIterable
 # import numpy as np
 from ..aerodynamics import np
@@ -1419,7 +1419,7 @@ def odeRK4(dfunc, times, xo, ufunc=None, h='auto', n=300, tol=1e-5, verbose=True
     # U = zList(1,val=u)
     
     t = tstart
-    x = zList(2, val=xo[:])
+    x = zList(len(xo), val=xo[:])
     # h = None
     
     data = zemptyFile()
