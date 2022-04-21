@@ -1092,12 +1092,12 @@ def newtonsMethodSystem(f, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwar
         ea = max([abs(i) for i in nF])
         if display: print('{:9d}   {:19.12e}'.format(count, ea))
         dx = grad.Axb(nF)
-        xn = xo + la * dx
+        xo = xo + la * dx
         if count >= maxIter:
             if display: print('Too many interations in newtonsMethodSystem with an approximate error of {:.12e}'.format(ea))
             return None
     if display: print('newtonsMethodSystem converged with {:.0f} iterations and an approximate error of {:.12e}'.format(count,ea))
-    return xn
+    return xo
 
 def isClose(x, y, tol=1.e-12):
     # return y-tol <= x and x <= y+tol

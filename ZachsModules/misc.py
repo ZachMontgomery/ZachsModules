@@ -120,4 +120,18 @@ class zBinary():
         return self.__rdiv__(x)
 
 
+def nestedDictAssign(d,keys, val):
+    t = d
+    for key in keys[:-1]:
+        if key not in t:
+            t[key] = {}
+        if type(t[key]) != dict: t[key] = {}
+        t = t[key]
+    t[keys[-1]] = val
+
+def nestedDictGet(d, keys):
+    t = d
+    for key in keys:
+        t = t.get(key, {})
+    return t
 
