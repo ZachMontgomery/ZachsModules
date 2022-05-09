@@ -28,6 +28,7 @@ def updateRCParams(paperPublication=False, useZachsDefaults=True, **kw):
         rcParams['font.serif'] = ['Times New Roman', 'Times']
         ## set default save fig setting for transparent background
         rcParams['savefig.transparent'] = True
+        rcParams['figure.dpi'] = 300
         ## set default math test. I pulled these from Jeff's contour code. This may or may not be needed.
         rcParams['mathtext.rm'] = 'serif'
         rcParams['mathtext.it'] = 'serif:italic'
