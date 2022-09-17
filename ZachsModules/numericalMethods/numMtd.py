@@ -237,22 +237,26 @@ def centralDifference(f, x, h = 0.5e-2, args = (), kwargs = {}):
 def newtonsMethod(f, val, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwargs = {}, derivative=centralDifference, display=False, bounds = (None,None), relaxationFactor=1.0):
     ea = 1.
     count = 0
-    # print('initial guess is ',xo)
+    if display:
+        print('{:^54s}'.format('Newton-Raphson Method'))
+        print('{:4s}  {:^23s}  {:^23s}\n{:=^4s}  {:=^23s}  {:=^23s}'.format('ITER', '% Approx. Error', 'x', '', '', ''))
     while ea > tol:
         count += 1
-        
-        if display: print('{:4d}  {:23.16e}'.format(count, xo))
         
         if bounds[0] != None and xo < bounds[0]: xo = bounds[0]
         if bounds[1] != None and xo > bounds[1]: xo = bounds[1]
         
         df = derivative(f, xo, h=h, args=args, kwargs=kwargs)
         if df == 0.:
-            if display: text('0 derivative calc in newtonsMethod')
+            if display: print('0 derivative calc in newtonsMethod')
             df = 1.0e-10
         # print('df is ',df)
         xn = xo - (f(xo, *args, **kwargs) - val) / df * relaxationFactor
-        ea = abs(xn-xo)
+        if xn != 0.:
+            ea = abs((xn-xo)/xn)*100 / relaxationFactor
+        else:
+            ea = abs(xn-xo)*100 / relaxationFactor
+        if display: print('{:4d}  {:23.16e}  {:23.16e}'.format(count, ea, xn))
         # print(count,xo,xn)
         xo = xn
         if xn != xn:
@@ -262,6 +266,54 @@ def newtonsMethod(f, val, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwarg
             return None
     if display: print('newtonsMethod converged with {:.0f} iterations and an approximate error of {:.12e}'.format(count,ea))
     return xn
+
+def falsePositionMethod(f, val, xl, xu, maxIter=200, args=(), kwargs={}, display=False, tol=1.0e-12):
+    ea = 1.0
+    count = 0
+    if display: print('{:^54s}'.format('False-Position Method'))
+    # check for proper bracket points
+    fl = f(xl, *args, **kwargs) - val
+    fu = f(xu, *args, **kwargs) - val
+    if fl * fu > 0.0:
+        if display:
+            print('{:^22s}  {:^22s}'.format('New Bracket Range', 'Normalized Function'))
+            print(('{:^10s}'+'  {:^10s}'*3).format('xl', 'xu', 'fl', 'fu'))
+            print(('{:=^10s}'+'  {:=^10s}'*3).format('', '', '', ''))
+        while fl * fu > 0.0:
+            d = (xu - xl) * 0.2
+            if abs(fl) <= abs(fu):
+                xl -= d
+                fl = f(xl, *args, **kwargs) - val
+            else:
+                xu += d
+                fu = f(xu, *args, **kwargs) - val
+            if display: print('{:10.3e}  {:10.3e}  {:10.3e}  {:10.3e}'.format(xl, xu, fl, fu))
+    if display: print('{:4s}  {:^23s}  {:^23s}\n{:=^4s}  {:=^23s}  {:=^23s}'.format('ITER', 'Error', 'Bracket', '', '', ''))
+    while True:
+        count += 1
+        xm = (xl*fu - xu*fl) / (fu - fl)
+        fm = f(xm, *args, **kwargs) - val
+        ea = min(abs(i) for i in (fl, fm, fu))
+        if display: print('{:4d}  {:23.16e}  {:23.16e}'.format(count, ea, xu - xl))
+        if ea < tol:
+            f = [abs(i) for i in (fl, fm, fu)]
+            return [xl, xm, xu][f.index(min(f))]
+        elif abs(xu - xl) < tol:
+            print('bracket length too small. just returning the value')
+            input()
+            return xm
+        elif fl * fm < 0.:
+            xu = xm
+            fu = fm
+        elif fu * fm < 0.:
+            xl = xm
+            fl = fm
+        else:
+            raise ValueError()
+        if count >= maxIter:
+            if display: print('Too many iterations in falsePositionMethod with an error of {:.12e}'.format(ea))
+            return None
+
 
 def mathText2float(t):
     items = ('(',')','^','*','/','+','-')  #maybe add trig stuff

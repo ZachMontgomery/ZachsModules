@@ -2,6 +2,33 @@
 from .misc import isIterable
 from numpy import float64
 from os import popen
+import sys, time, msvcrt
+
+def timedInput( caption, default, timeout = 5):
+    
+    start_time = time.time()
+    sys.stdout.write('{} ({}): '.format(caption, default))
+    sys.stdout.flush()
+    inp = ''
+    while True:
+        if msvcrt.kbhit():
+            byte_arr = msvcrt.getche()
+            if ord(byte_arr) == 13: # enter_key
+                break
+            elif ord(byte_arr) >= 32: #space_char
+                inp += "".join(map(chr,byte_arr))
+        if (time.time() - start_time) > timeout:
+            if len(inp) == 0:
+                print('Timed out, using default value.', end='')
+            else:
+                print(' Timed out, using given value.', end='')
+            break
+
+    print('')  # needed to move to next line
+    if len(inp) > 0:
+        return inp
+    else:
+        return default
 
 def csvLineWrite(*obj, sep=',', end='\n'):
     line = ''

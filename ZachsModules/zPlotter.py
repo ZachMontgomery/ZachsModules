@@ -1,6 +1,8 @@
 from matplotlib.ticker import FormatStrFormatter, AutoMinorLocator
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import art3d
+from numpy import array
 
 defaultLW = 0.5
 defaultColor = '0.75'
@@ -18,10 +20,14 @@ def createBasePlot(**kw):
     ax = fig.add_subplot(sp)
     return fig, ax
 
-def updateRCParams(paperPublication=False, useZachsDefaults=True, **kw):
+def updateRCParams(paperPublication=False, useZachsDefaults=True, ax3Dsetup=True, **kw):
     
     ## default settings
     if useZachsDefaults:
+        
+        ## scientific notation tick label defaults
+        rcParams['axes.formatter.limits'] = [-2,2]
+        rcParams['axes.formatter.use_mathtext'] = True
         ## set default font to Times New Roman
         rcParams['text.usetex'] = True
         rcParams['font.family'] = 'serif'
@@ -58,7 +64,6 @@ def updateRCParams(paperPublication=False, useZachsDefaults=True, **kw):
         # rcParams['xtick.minor.top'] = True
         rcParams['xtick.minor.width'] = 0.25
         rcParams['xtick.minor.size'] = 1.75
-        rcParams['xtick.minor.visible'] = True
         rcParams['xtick.top'] = True
         
         rcParams['ytick.direction'] = 'in'
@@ -70,8 +75,11 @@ def updateRCParams(paperPublication=False, useZachsDefaults=True, **kw):
         # rcParams['ytick.minor.right'] = True
         rcParams['ytick.minor.width'] = 0.25
         rcParams['ytick.minor.size'] = 1.75
-        rcParams['ytick.minor.visible'] = True
         rcParams['ytick.right'] = True
+    
+    if not ax3Dsetup:
+        rcParams['xtick.minor.visible'] = True
+        rcParams['ytick.minor.visible'] = True
     
     if paperPublication:
         rcParams['font.size'] = 7.1
@@ -83,6 +91,32 @@ def updateRCParams(paperPublication=False, useZachsDefaults=True, **kw):
     ## additional settings (these can override the default settings)
     for k,v in kw.items():
         rcParams[k] = v
+
+def axis3DgridZachsPreferences(ax):
+    
+    ax.w_xaxis.pane.fill = False
+    ax.w_yaxis.pane.fill = False
+    ax.w_zaxis.pane.fill = False
+    
+    # ax.w_xaxis.pane.set_edgecolor('k')
+    # ax.w_yaxis.pane.set_edgecolor('k')
+    # ax.w_zaxis.pane.set_edgecolor('k')
+    
+    # x = ax.get_xlim3d()
+    # y = ax.get_ylim3d()
+    # z = ax.get_zlim3d()
+    
+    # xr = x[1] - x[0]
+    # yr = y[1] - y[0]
+    # zr = z[1] - z[0]
+    
+    # p = [None]*4
+    # for i in range(4):
+        # t = array([[array([x[i//2], y[i%2], z[0]]),array([x[i//2], y[i%2], z[1]])]])
+        # print(t.shape)
+        # p[i] = art3d.Poly3DCollection(t)
+        # p[i].set_color('k')
+        # ax.add_collection3d(p[i])
 
 
 def formatAxis(ax, **kw):
@@ -278,3 +312,32 @@ def minorTickStep(ax, n):
     
     ax.set_xticks(x, minor=True)
     ax.set_yticks(y, minor=True)
+
+
+def link3Daxes(fig, ax, ):
+    '''
+    inputs
+        fig = figure object of linked ax objects
+        ax = flattened ndarray or other iterable of ax objects to be linked together
+    '''
+    def on_move(event):
+        flag = False
+        for i in range(len(ax)):
+            if event.inaxes == ax[i]:
+                for j in range(len(ax)):
+                    if i == j:
+                        continue
+                    elif ax[i].button_pressed in ax[i]._rotate_btn:
+                        flag = True
+                        ax[j].view_init(elev=ax[i].elev, azim=ax[i].azim)
+                    elif ax[i].button_pressed in ax[i]._zoom_btn:
+                        flag = True
+                        ax[j].set_xlim3d(ax[i].get_xlim3d())
+                        ax[j].set_ylim3d(ax[i].get_ylim3d())
+                        ax[j].set_zlim3d(ax[i].get_zlim3d())
+                    # else:
+                        # print('what?')
+        if flag: fig.canvas.draw_idle()
+    # return on_move
+    fig.canvas.mpl_connect('motion_notify_event', on_move)
+
