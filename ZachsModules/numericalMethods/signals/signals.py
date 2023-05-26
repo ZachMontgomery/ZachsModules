@@ -1,4 +1,6 @@
 from ...misc import isIterable
+from ...io import text
+from numpy import pi
 
 class runningAverage():
     
@@ -47,46 +49,69 @@ class runningAverage():
         return self.average()
 
 
-class lowpassFilter():
+class lowPassFilter():
     
-    def __init__(self, *args):
+    def __init__(self, freqHZ=None, timeConstant=None):
         
-        if len(args) == 2:
-            tc, h = args
-            a = h / (tc + h)
-            self.set_a(a)
-            if h > tc/5: text(['WARNING','time step {:.6e} is not <= time constant {:.6e} / 5'.format(h, tc),'for a lowpass filter object'])
-        elif len(args) == 1:
-            self.set_a(args[0])
-        elif len(args) > 2:
-            raise ValueError(text('Unexpected number of arguments to create lowpassFilter object',title='lowpassFilter __init__ error!',p2s=False))
+        if freqHZ == None and timeConstant == None:
+            raise ValueError('Either the cut-off frequency or time constant needs to be specified.')
+        elif timeConstant == None:
+            self.__freq__ = freqHZ
+            self.__tc__ = 1 / 2 / pi / freqHZ
+        elif freqHZ == None:
+            self.__tc__ = timeConstant
+            self.__freq__ = 1 / 2 / pi / timeConstant
         else:
-            self.__a__ = None
+            if freqHZ != 1 / 2 / pi / timeConstant: raise ValueError('Given cut-off frequency, {} Hz, does not agree with given time constant, {} sec.'.format(freqHZ, timeConstant))
+            self.__freq__ = freqHZ
+            self.__tc__ = timeConstant
         
-        
-        self.__past__ = None
+        self.time  = []
+        self.value = []
     
-    def set_a(self, a):
-        if a >= 0. and a <= 1.:
-            self.__a__ = a
+    def update(self, t, v):
+        if isIterable(t):
+            if not isIterable(v) or len(v) != len(t): raise ValueError()
+            t = list(t)
+            v = list(v)
+            
+            if len(self.time) == 0:
+                self.time.append(t.pop(0))
+                self.value.append(v.pop(0))
+            
+            k = len(t)
+            
+            dt = [t[i] - t[i-1] if i > 0 else t[i] -  self.time[-1] for i in range(k)]
+            a  = [i / (self.__tc__ + i) for i in dt]
+            
+            prev = self.value[-1]
+            x = [None]*k
+            for i in range(k):
+                new = a[i] * v[i] + (1-a[i])*prev
+                x[i] = new
+                prev = new
+            
+            self.time  += t
+            self.value += x
+            return prev
         else:
-            raise ValueError(text(['exponential factor not between 0 and 1','0 <= a <= 1'],title='lowpassFilter set_a error!',p2s=False))
-    
-    def get_a(self):
-        return self.__a__
-    
-    def initialize(self, val):
-        self.__past__ = val
-    
-    def update(self, val):
-        if self.__past__ == None:
-            self.__past__ = val
-            return val
-        else:
-            self.__past__ = (1.-self.__a__) * self.__past__ + self.__a__ * val
-            return self.__past__
+            if isIterable(v): raise ValueError()
+            
+            prev = self.value[-1]
+            
+            dt = t - self.time[-1]
+            dv = v - prev
+            
+            a = dt / (self.__tc__ + dt)
+            
+            new = prev + a * dv
+            
+            self.time.append(t)
+            self.value.append(new)
+            return new
 
-class highpassFilter():
+
+class highPassFilter():
     
     def __init__(self, *args):
         

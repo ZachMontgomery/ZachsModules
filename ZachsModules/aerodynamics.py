@@ -409,3 +409,21 @@ def airfoilPressureDist(norms, X, Y, CL, CD, Cm, alpha=0.):
     return sol.x, Cz_cons(sol.x)+Cz, Cx_cons(sol.x)+Cx, Cm_cons(sol.x)+Cm
     
     
+
+def quat2euler(e):
+    
+    e0, ex, ey, ez = e
+    
+    temp = e0*ey - ex*ez
+    
+    if abs(temp) == 0.5:
+        theta = np.pi / 2 * np.sign(temp)
+        psi = 0
+        phi = 2*np.arcsin(ex / np.cos(pi/4)) + psi * np.sign(temp)
+    else:
+        phi = np.arctan2(2*(e0*ex + ey*ez), e0**2+ez**2-ex**2-ey**2)
+        theta = np.arcsin(2*temp)
+        psi = np.arctan2(2*(e0*ez + ex*ey), e0**2+ex**2-ey**2-ez**2)
+    
+    return phi, theta, psi
+

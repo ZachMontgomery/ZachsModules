@@ -1,4 +1,4 @@
-from ..io import oneLineProgress, Progress, appendToFile, zemptyFile
+from ..io import oneLineProgress, Progress, appendToFile, zemptyFile, timedInput
 from ..misc import isIterable
 # import numpy as np
 from ..aerodynamics import np
@@ -27,7 +27,7 @@ def interpolate_1D(x,data,xval,returnIndex=False):
                 imin = i
                 imax = i+1
                 break
-    if imax == None: raise ValueError('xval is not in the bounds of x')
+    if imax == None: raise ValueError('xval {} is not in the bounds of x, ({}, {})'.format(xval,x[0],x[-1]))
     val = interpolate(x[imin],x[imax],xval,data[imin],data[imax])
     if returnIndex:
         return val, [imin,imax]
@@ -250,24 +250,23 @@ def newtonsMethod(f, val, xo, tol=1.0e-12, h=0.5e-2, maxIter=200, args=(), kwarg
         if df == 0.:
             if display: print('0 derivative calc in newtonsMethod')
             df = 1.0e-10
-        # print('df is ',df)
         xn = xo - (f(xo, *args, **kwargs) - val) / df * relaxationFactor
         if xn != 0.:
             ea = abs((xn-xo)/xn)*100 / relaxationFactor
         else:
             ea = abs(xn-xo)*100 / relaxationFactor
         if display: print('{:4d}  {:23.16e}  {:23.16e}'.format(count, ea, xn))
-        # print(count,xo,xn)
         xo = xn
         if xn != xn:
-            print('xn is a nan, ',xn)
+            # print('xn is a nan, ',xn)
+            return xn
         if count >= maxIter:
             if display: print('Too many iterations in newtonsMethod with an approximate error of {:.12e}'.format(ea))
             return None
     if display: print('newtonsMethod converged with {:.0f} iterations and an approximate error of {:.12e}'.format(count,ea))
     return xn
 
-def falsePositionMethod(f, val, xl, xu, maxIter=200, args=(), kwargs={}, display=False, tol=1.0e-12):
+def falsePositionMethod(f, val, xl, xu, maxIter=200, args=(), kwargs={}, display=False, tol=1.0e-12, bound=(None,None)):
     ea = 1.0
     count = 0
     if display: print('{:^54s}'.format('False-Position Method'))
@@ -279,19 +278,40 @@ def falsePositionMethod(f, val, xl, xu, maxIter=200, args=(), kwargs={}, display
             print('{:^22s}  {:^22s}'.format('New Bracket Range', 'Normalized Function'))
             print(('{:^10s}'+'  {:^10s}'*3).format('xl', 'xu', 'fl', 'fu'))
             print(('{:=^10s}'+'  {:=^10s}'*3).format('', '', '', ''))
+        cnt = 0
         while fl * fu > 0.0:
-            d = (xu - xl) * 0.2
+            cnt += 1
+            if cnt >= 200:
+                print()
+                print(xl, xu, fl, fu)
+                xl = float(input('xl: '))
+                xu = float(input('xu: '))
+                bound = list(bound)
+                if bound[0] != None and xl < bound[0]: bound[0] = xl
+                if bound[1] != None and xu > bound[1]: bound[1] = xu
+                fl = f(xl, *args, **kwargs) - val
+                fu = f(xu, *args, **kwargs) - val
+                if cnt >= 205: 
+                    return np.nan
+            d = (xu - xl) * 0.01
             if abs(fl) <= abs(fu):
                 xl -= d
+                if bound[0] != None and xl < bound[0]: xl = bound[0]
                 fl = f(xl, *args, **kwargs) - val
             else:
                 xu += d
+                if bound[1] != None and xu > bound[1]: xu = bound[1]
                 fu = f(xu, *args, **kwargs) - val
             if display: print('{:10.3e}  {:10.3e}  {:10.3e}  {:10.3e}'.format(xl, xu, fl, fu))
     if display: print('{:4s}  {:^23s}  {:^23s}\n{:=^4s}  {:=^23s}  {:=^23s}'.format('ITER', 'Error', 'Bracket', '', '', ''))
+    cntL, cntU = 0,0
     while True:
         count += 1
-        xm = (xl*fu - xu*fl) / (fu - fl)
+        if cntU >= 3 or cntL >=3:
+            xm = (xl + xu) / 2
+            cntU, cntL = 0,0
+        else:
+            xm = (xl*fu - xu*fl) / (fu - fl)
         fm = f(xm, *args, **kwargs) - val
         ea = min(abs(i) for i in (fl, fm, fu))
         if display: print('{:4d}  {:23.16e}  {:23.16e}'.format(count, ea, xu - xl))
@@ -299,15 +319,18 @@ def falsePositionMethod(f, val, xl, xu, maxIter=200, args=(), kwargs={}, display
             f = [abs(i) for i in (fl, fm, fu)]
             return [xl, xm, xu][f.index(min(f))]
         elif abs(xu - xl) < tol:
-            print('bracket length too small. just returning the value')
-            input()
+            if display: timedInput('bracket length too small. just returning the value', None, timeout=0.1)
             return xm
         elif fl * fm < 0.:
             xu = xm
             fu = fm
+            cntU += 1
+            cntL = 0
         elif fu * fm < 0.:
             xl = xm
             fl = fm
+            cntL += 1
+            cntU = 0
         else:
             raise ValueError()
         if count >= maxIter:
@@ -1708,3 +1731,66 @@ def runCases(func, it, fn, nBatch=None, progKW={}, chunkSize=1, cpus=cpu_count()
         appendToFile(fn, *x, multiLine=True)
         
         prog.display()
+
+
+def bairstowsMethod(a, R, S, tol=1e-12, maxit=200):
+    def quadroot(r,s):
+        d = r**2 + 4*s
+        if d >= 0:
+            x = (r + d**0.5) / 2
+            y = (r - d**0.5) / 2
+        else:
+            x = complex(r/2, abs(d)**0.5/2)
+            y = x.conjugate()
+        return [x, y]
+    r, s = R, S
+    ea1 = ea2 = 1
+    n = len(a) - 1
+    it = 0
+    b = [None]*(n+1)
+    c = [None]*(n+1)
+    roots = []
+    EA = []
+    while n >= 3 and it < maxit:
+        it = 0
+        ea1 = ea2 = 9e999
+        while ea1 > tol or ea2 > tol and it < maxit:
+            it += 1
+            b[n] = a[n]
+            c[n] = b[n]
+            b[n-1] = a[n-1] + r * b[n]
+            c[n-1] = b[n-1] + r * c[n]
+            for i in range(n-2,-1,-1):
+                b[i] = a[i] + r * b[i+1] + s * b[i+2]
+                c[i] = b[i] + r * c[i+1] + s * c[i+2]
+            det = c[2] * c[2] - c[3] * c[1]
+            if det != 0:
+                dr = (b[0]*c[3] - b[1]*c[2]) / det
+                ds = (b[1]*c[1] - b[0]*c[2]) / det
+                r += dr
+                s += ds
+                if r != 0: ea1 = abs(dr/r) * 100
+                if s != 0: ea2 = abs(ds/s) * 100
+            else:
+                r += 1
+                s += 1
+                # it = 0
+        roots += quadroot(r,s)
+        EA += [ea1, ea2]
+        n -= 2
+        for i in range(n+1):
+            a[i] = b[i+2]
+    if it < maxit:
+        if n == 2:
+            r = -a[1] / a[2]
+            s = -a[0] / a[2]
+            roots += quadroot(r,s)
+            EA += [0]*2
+        else:
+            roots += [-a[0] / a[1]]
+            EA += [0]
+    else:
+        raise ValueError('Too many iterations in Bairstows method')
+    return roots, EA
+
+

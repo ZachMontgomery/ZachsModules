@@ -4,29 +4,43 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import art3d
 from numpy import array
 
+rcParamsOrig = {}
+for k,v in rcParams.items():
+    rcParamsOrig[k] = v
+
 defaultLW = 0.5
 defaultColor = '0.75'
 defaultDashedLS = (0, (3, 3))
 
-def createBasePlot(**kw):
-    ## extract input data
-    fs = kw.get('figsize', None)
-    sp = kw.get('subplot', 111)
+def subplots(**kw):
+    width, height = rcParams['figure.figsize']
+    c = kw.get('ncols',1)
+    r = kw.get('nrows',1)
     
-    if fs != None:
-        fig = plt.figure(figsize=fs)
+    fig, ax = plt.subplots(figsize=(width*c, height*r), **kw)
+    if r * c > 1:
+        for i in ax.flatten(): grid(i)
     else:
-        fig = plt.figure()
-    ax = fig.add_subplot(sp)
+        grid(ax)
+    sharex, sharey = kw.get('sharex', False), kw.get('sharey', False)
+    if sharex or sharey:
+        link2Daxes(ax.flatten(), x=sharex, y=sharey)
     return fig, ax
 
-def updateRCParams(paperPublication=False, useZachsDefaults=True, ax3Dsetup=True, **kw):
+def resetRCParams():
+    for k,v in rcParamsOrig.items():
+        rcParams[k] = v
+
+def updateRCParams(paperPublication=False, useZachsDefaults=True, ax3Dsetup=False, reset=True, **kw):
+    
+    if reset:
+        resetRCParams()
     
     ## default settings
     if useZachsDefaults:
         
         ## scientific notation tick label defaults
-        rcParams['axes.formatter.limits'] = [-2,2]
+        rcParams['axes.formatter.limits'] = [-2,4]
         rcParams['axes.formatter.use_mathtext'] = True
         ## set default font to Times New Roman
         rcParams['text.usetex'] = True
@@ -86,6 +100,7 @@ def updateRCParams(paperPublication=False, useZachsDefaults=True, ax3Dsetup=True
         rcParams['figure.figsize'] = [3.25, 2.5]
         rcParams['xtick.labelsize'] = 7.1
         rcParams['ytick.labelsize'] = 7.1
+        rcParams['lines.markersize'] = 3.0
         
     
     ## additional settings (these can override the default settings)
@@ -341,3 +356,31 @@ def link3Daxes(fig, ax, ):
     # return on_move
     fig.canvas.mpl_connect('motion_notify_event', on_move)
 
+def link2Daxes(ax, x=True, y=True):
+    '''
+    inputs
+        ax = flattened ndarray or other iterable of ax objects to be linked together
+    '''
+    if x: ax[0].get_shared_x_axes().join(*ax)
+    if y: ax[0].get_shared_y_axes().join(*ax)
+
+
+
+from matplotlib.ticker import ScalarFormatter
+
+class FixedOrderFormatter(ScalarFormatter):
+    """Formats axis ticks using scientific notation with a constant order of 
+    magnitude"""
+    def __init__(self, order_of_mag, useOffset=True, useMathText=True):
+        self._order_of_mag = order_of_mag
+        ScalarFormatter.__init__(self, useOffset=useOffset, 
+                                 useMathText=useMathText)
+    def _set_order_of_magnitude(self, ):
+        """Over-riding this to avoid having orderOfMagnitude reset elsewhere"""
+        self.orderOfMagnitude = self._order_of_mag
+
+
+def grid(ax, majorKW={'color':'0.75', 'linestyle':'--', 'linewidth':0.4, }, 
+             minorKW={'color':'0.75', 'linestyle':'--', 'linewidth':0.4, 'alpha':0.5}):
+    ax.grid(which='major', **majorKW)
+    ax.grid(which='minor', **minorKW)
