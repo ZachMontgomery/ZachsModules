@@ -361,8 +361,14 @@ def link2Daxes(ax, x=True, y=True):
     inputs
         ax = flattened ndarray or other iterable of ax objects to be linked together
     '''
-    if x: ax[0].get_shared_x_axes().join(*ax)
-    if y: ax[0].get_shared_y_axes().join(*ax)
+    # ~ if x: ax[0].get_shared_x_axes().join(*ax)
+    # ~ if y: ax[0].get_shared_y_axes().join(*ax)
+    n = len(ax)
+    if x:
+        for i in range(n-1): ax[i].sharex(ax[i+1])
+    if y:
+        for i in range(n-1): ax[i].sharey(ax[i+1])
+    
 
 
 

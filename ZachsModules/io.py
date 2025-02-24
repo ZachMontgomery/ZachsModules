@@ -1,8 +1,40 @@
 # from ..aerodynamics import np
 from .misc import isIterable
 from numpy import float64
-from os import popen
-import sys, time, msvcrt
+# from os import popen
+import os
+import sys, time
+if os.name == 'nt':
+    import msvcrt
+elif os.name == 'posix':
+    import curses
+
+class dataStruct:
+    
+    def __init__(self, title=None):
+        self.__title__ = title
+    
+    def __str__(self):
+        lks = []
+        lvs = []
+        ks = []
+        vs = []
+        for k,v in self.__dict__.items():
+            if k == '__title__': continue
+            ks.append(k)
+            vs.append(v)
+            lks.append(len(k))
+            lvs.append(len(str(v)))
+        mlk = max(lks)
+        lf = [mlk - lk for lk in lks]
+        ff = [' '*i for i in lf]
+        
+        mlv = max(lvs)
+        lb = [mlv - lv for lv in lvs]
+        fb = [' '*i for i in lb]
+        s = ['{}{} = {}{}'.format(k, i, j, v) for i,k,v,j in zip(ff,ks,vs,fb)]
+        # ~ return text(*['{} = {}'.format(k,v) for k,v in self.__dict__.items()], p2s=False, title=self.__title__)
+        return text(*s, p2s=False, title=self.__title__)
 
 def timedInput( caption, default, timeout = 5):
     
@@ -10,20 +42,35 @@ def timedInput( caption, default, timeout = 5):
     sys.stdout.write('{} ({}): '.format(caption, default))
     sys.stdout.flush()
     inp = ''
-    while True:
-        if msvcrt.kbhit():
-            byte_arr = msvcrt.getche()
-            if ord(byte_arr) == 13: # enter_key
+    if os.name == 'nt':     ## windows
+        while True:
+            if msvcrt.kbhit():
+                byte_arr = msvcrt.getche()
+                if ord(byte_arr) == 13: # enter_key
+                    break
+                elif ord(byte_arr) >= 32: #space_char
+                    inp += "".join(map(chr,byte_arr))
+            if (time.time() - start_time) > timeout:
+                if len(inp) == 0:
+                    print('Timed out, using default value.', end='')
+                else:
+                    print('Timed out, using given value.', end='')
                 break
-            elif ord(byte_arr) >= 32: #space_char
-                inp += "".join(map(chr,byte_arr))
-        if (time.time() - start_time) > timeout:
-            if len(inp) == 0:
-                print('Timed out, using default value.', end='')
-            else:
-                print(' Timed out, using given value.', end='')
-            break
-
+    elif os.name == 'posix':    ## macos or linux
+        win = curses.initscr()
+        curses.cbreak()
+        win.nodelay(True)
+        while True:
+            key = win.getch()
+            if key != -1:
+                if key == 10: break
+                inp += chr(key)
+            if (time.time() - start_time) > timeout*100:
+                if len(inp) == 0:
+                    print('Timed out, using default value.', end='')
+                else:
+                    print('Timed out, using given value.', end='')
+                break
     print('')  # needed to move to next line
     if len(inp) > 0:
         return inp
@@ -681,10 +728,12 @@ def pauseTimed(sec):
     while timer.length().total_seconds() < sec: pass
 
 def getTerminalColumnWidth():
+    if os.name == 'nt':     ## windows
+        return 96
     try:
-        return int(popen('stty size', 'r').read().split()[-1])-1
+        return int(os.popen('stty size', 'r').read().split()[-1])-1
     except:
-        return 77
+        return 96
 
 from tempfile import TemporaryFile as tf
 

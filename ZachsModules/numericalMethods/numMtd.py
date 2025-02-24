@@ -1,4 +1,4 @@
-from ..io import oneLineProgress, Progress, appendToFile, zemptyFile, timedInput
+from ..io import oneLineProgress, Progress, appendToFile, zemptyFile, oneLineText
 from ..misc import isIterable
 # import numpy as np
 from ..aerodynamics import np
@@ -189,6 +189,45 @@ def interpolate_2D(x,y,data,xval,yval,returnIndex=False,fixHoles=(False,)):
         else:
             return val
 
+def interpolate_ND(X_arrays, data, xvals):
+    N = len(X_arrays)
+    x_arrays = [list(i) for i in X_arrays]
+    imax = [None]*N
+    imin = [None]*N
+    s = [None]*N
+    for n in range(N):
+        x_array = x_arrays[n]
+        xval = xvals[n]
+        if xval in x_array:
+            i = x_array.index(xval)
+            if i == len(x_array)-1:
+                imax[n] = i
+                imin[n] = i-1
+                s[n] = 1.
+            else:
+                imin[n] = i
+                imax[n] = i+1
+                s[n] = 0.
+        else:
+            for i in range(len(x_array)-1):
+                if x_array[i] < xval and xval < x_array[i+1]:
+                    imin[n] = i
+                    imax[n] = i+1
+                    s[n] = (xval - x_array[i]) / (x_array[i+1] - x_array[i])
+                    break
+        if imax[n] == None: raise ValueError('xval of {} is not in the bounds of xmax {} and xmin {}'.format(xval, max(x_array), min(x_array)))
+    slices = tuple([slice(imin[n], imax[n]+1, 1) for n in range(N)])
+    d = data[slices]
+    slice1 = [slice(0,2) for n in range(N-1)] + [0]
+    slice2 = [slice(0,2) for n in range(N-1)] + [1]
+    for n in range(N-1,-1,-1):
+        d1 = d[tuple(slice1)]
+        d2 = d[tuple(slice2)]
+        d = (d2 - d1) * s[n] + d1
+        slice1.pop(0)
+        slice2.pop(0)
+    return d
+
 def trap(x,y):
     n = len(x)
     total = 0.
@@ -197,7 +236,6 @@ def trap(x,y):
         h = .5 * (y[i+1] + y[i])
         total += dx * h
     return total
-
 
 def centralDifference(f, x, h = 0.5e-2, args = (), kwargs = {}):
     '''
@@ -319,7 +357,7 @@ def falsePositionMethod(f, val, xl, xu, maxIter=200, args=(), kwargs={}, display
             f = [abs(i) for i in (fl, fm, fu)]
             return [xl, xm, xu][f.index(min(f))]
         elif abs(xu - xl) < tol:
-            if display: timedInput('bracket length too small. just returning the value', None, timeout=0.1)
+            if display: oneLineText('bracket length too small. just returning the value')
             return xm
         elif fl * fm < 0.:
             xu = xm
