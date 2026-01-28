@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import art3d
 from numpy import array
 
+## default figsize = [6.4, 4.8]
+def_figsize = rcParams['figure.figsize'] #[6.4, 4.8]
+
 rcParamsOrig = {}
 for k,v in rcParams.items():
     rcParamsOrig[k] = v

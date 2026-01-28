@@ -419,7 +419,7 @@ def quat2euler(e):
     if abs(temp) == 0.5:
         theta = np.pi / 2 * np.sign(temp)
         psi = 0
-        phi = 2*np.arcsin(ex / np.cos(pi/4)) + psi * np.sign(temp)
+        phi = 2*np.arcsin(ex / np.cos(np.pi/4)) + psi * np.sign(temp)
     else:
         phi = np.arctan2(2*(e0*ex + ey*ez), e0**2+ez**2-ex**2-ey**2)
         theta = np.arcsin(2*temp)
